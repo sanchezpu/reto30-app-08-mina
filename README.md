@@ -115,26 +115,28 @@ fallar la aplicación. La comprobación más tonta posible es la única que no p
 
 ## Despliegue de la API
 
-El frontend va con `./deploy.sh` (build en local, subida y cambio atómico de directorio).
-La API es un archivo suelto sobre un bind mount:
+El frontend va con `./deploy.sh`: build en local, subida y cambio atómico de directorio.
+
+La API es un archivo suelto sobre un bind mount, sin `node_modules` que instalar. Se sube
+el archivo y se recrea el contenedor:
 
 ```bash
-# 1. Subir el servidor
-base64 -w0 server/server.js | ssh root@SERVIDOR \
-  'base64 -d > /var/www/reto30/app08-api/server.js'
+base64 -w0 server/server.js | ssh root@SERVIDOR 'base64 -d > RUTA_API/server.js'
 
-# 2. Recrear el contenedor
 ssh root@SERVIDOR '
-  docker rm -f reto30-app08-api
-  docker run -d --name reto30-app08-api --restart unless-stopped \
-    --network easypanel-reto30 \
-    --env-file /etc/reto30/app08.env \
+  docker rm -f mina-api
+  docker run -d --name mina-api --restart unless-stopped \
+    --network RED_DOCKER \
+    --env-file RUTA_ENV/mina.env \
     -e MINA_PUERTO=3008 \
-    -v /var/www/reto30/app08-api:/app:ro \
+    -v RUTA_API:/app:ro \
     -w /app --memory 256m \
     node:22-alpine node server.js'
 ```
 
+El archivo de entorno vive **fuera** del directorio servido y con permisos 600, para que
+ningún despliegue lo pise ni el servidor web lo publique por accidente.
+
 ⚠️ **`docker restart` no basta después de tocar el `.env`.** `--env-file` se resuelve al
 *crear* el contenedor: un restart lo deja con las variables viejas, y la API arranca tan
-contenta reportando `clave AUSENTE`. Hay que recrearlo.
+contenta reportando `clave AUSENTE` mientras el archivo está perfecto. Hay que recrearlo.
