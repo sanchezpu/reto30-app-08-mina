@@ -100,7 +100,7 @@ node herramientas/probar-verbatims.mjs \
   resenas.txt competidor.txt "Nombre del negocio"
 ```
 
-La segunda comprueba la literalidad con `corpus.includes(cita)` a secas, **a propósito**:
+La tercera comprueba la literalidad con `corpus.includes(cita)` a secas, **a propósito**:
 si reutilizara la función del servidor, un fallo en esa función haría pasar la prueba y
 fallar la aplicación. La comprobación más tonta posible es la única que no puede mentir.
 
@@ -112,3 +112,29 @@ fallar la aplicación. La comprobación más tonta posible es la única que no p
   ofrece copiarlo en vez de generar una URL rota.
 - La calidad del informe depende de la calidad de las reseñas: cinco reseñas de una línea
   dan una señal débil, y Mina lo dice en vez de disimularlo.
+
+## Despliegue de la API
+
+El frontend va con `./deploy.sh` (build en local, subida y cambio atómico de directorio).
+La API es un archivo suelto sobre un bind mount:
+
+```bash
+# 1. Subir el servidor
+base64 -w0 server/server.js | ssh root@SERVIDOR \
+  'base64 -d > /var/www/reto30/app08-api/server.js'
+
+# 2. Recrear el contenedor
+ssh root@SERVIDOR '
+  docker rm -f reto30-app08-api
+  docker run -d --name reto30-app08-api --restart unless-stopped \
+    --network easypanel-reto30 \
+    --env-file /etc/reto30/app08.env \
+    -e MINA_PUERTO=3008 \
+    -v /var/www/reto30/app08-api:/app:ro \
+    -w /app --memory 256m \
+    node:22-alpine node server.js'
+```
+
+⚠️ **`docker restart` no basta después de tocar el `.env`.** `--env-file` se resuelve al
+*crear* el contenedor: un restart lo deja con las variables viejas, y la API arranca tan
+contenta reportando `clave AUSENTE`. Hay que recrearlo.

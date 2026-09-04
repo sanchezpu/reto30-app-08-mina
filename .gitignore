@@ -9,3 +9,6 @@ dist/
 
 # Artefactos de build de TypeScript
 *.tsbuildinfo
+
+# Artefactos de Playwright MCP
+.playwright-mcp/

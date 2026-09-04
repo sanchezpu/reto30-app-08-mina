@@ -243,7 +243,10 @@ código. Esta es la forma exacta:
 }
 
 Entre 4 y 8 temas en "elogios", ordenados como quieras (el sistema los reordena
-por frecuencia). Entre 8 y 14 verbatims, con una mezcla de "titular" (frases con
+por frecuencia). En "elogios" va SOLO lo que el cliente celebra. Una queja no es
+un elogio por mucho que se repita: el ruido, la espera o el precio alto van en
+"objeciones", nunca en "elogios". Ese bloque se le enseña al cliente con el
+título «Qué elogian». Entre 8 y 14 verbatims, con una mezcla de "titular" (frases con
 gancho) y "prueba" (frases que sirven de prueba social). Entre 2 y 6 objeciones.
 Entre 3 y 4 ángulos, DISTINTOS ENTRE SÍ: si dos atacan el mismo deseo, sobra uno.
 Un anuncio por ángulo.`
@@ -291,7 +294,17 @@ function pedirAlModelo(mensajes) {
   return new Promise((resolve, reject) => {
     const cuerpo = JSON.stringify({
       model: MODELO,
-      max_tokens: 8000,
+      // ⚠️ max_tokens incluye los tokens de razonamiento, y eso costó un rato
+      // de diagnóstico: con 8000 y el razonamiento puesto, el modelo se gastó
+      // los 8000 pensando y devolvió CERO caracteres de contenido. La respuesta
+      // llegaba vacía o el JSON cortado a la mitad, y el error que salía era
+      // «formato ilegible», que apuntaba al sitio equivocado.
+      //
+      // Aquí el razonamiento no aporta: la fidelidad no la garantiza el modelo,
+      // la garantiza la verificación de arriba. Apagarlo dejó la respuesta en
+      // 3.752 tokens, la mitad de coste y sin truncar.
+      max_tokens: 16000,
+      reasoning: { enabled: false },
       temperature: 0.4,
       messages: mensajes,
     })
@@ -328,7 +341,20 @@ function pedirAlModelo(mensajes) {
           }
           try {
             const datos = JSON.parse(texto)
-            const salida = datos?.choices?.[0]?.message?.content
+            const eleccion = datos?.choices?.[0]
+            const salida = eleccion?.message?.content
+            // Distinguir «se quedó sin espacio» de «devolvió basura» importa:
+            // el primero se arregla subiendo el límite y el segundo no, y el
+            // error genérico mandaba a mirar el sitio equivocado.
+            if (eleccion?.finish_reason === 'length') {
+              return reject(
+                new Error(
+                  `respuesta truncada por limite de tokens (razonamiento=${
+                    datos?.usage?.completion_tokens_details?.reasoning_tokens ?? '?'
+                  }, contenido=${(salida || '').length} caracteres)`,
+                ),
+              )
+            }
             if (typeof salida !== 'string' || !salida.trim()) {
               return reject(new Error('el modelo no devolvió contenido'))
             }
@@ -625,4 +651,4 @@ if (esPrincipal) {
 
 // Se exportan para que las pruebas de herramientas/ usen EXACTAMENTE la misma
 // funcion que corre en produccion, y no una copia que se desincroniza.
-export { localizar, trocear, normalizar, sanear }
+export { localizar, trocear, normalizar, sanear, construirMensaje, SISTEMA, SISTEMA_COMPARATIVO }
