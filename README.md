@@ -85,6 +85,11 @@ Configuración: copia `.env.example` y rellena `OPENROUTER_API_KEY`.
 ## Pruebas
 
 ```bash
+# Las dos barandillas del servidor, sin gastar una llamada al modelo:
+# se le da una respuesta falsa con una cita inventada dentro y se
+# comprueba que la descarta.
+node herramientas/probar-barandillas.mjs
+
 # El informe de ejemplo cumple la regla que la app promete:
 # cada verbatim está literalmente en las reseñas de ejemplo.
 node herramientas/verificar-demo.mjs

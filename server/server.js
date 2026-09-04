@@ -625,4 +625,4 @@ if (esPrincipal) {
 
 // Se exportan para que las pruebas de herramientas/ usen EXACTAMENTE la misma
 // funcion que corre en produccion, y no una copia que se desincroniza.
-export { localizar, trocear, normalizar }
+export { localizar, trocear, normalizar, sanear }
