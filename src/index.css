@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #14161a;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Foco visible en todo lo que se pueda enfocar. Sin esto, moverse con el
+   teclado por el informe es adivinar. */
+:focus-visible {
+  outline: 2px solid #e9b44c;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* La barra lateral del textarea grande: se pega mucho texto y conviene que
+   no parezca un campo de formulario cualquiera. */
+textarea {
+  scrollbar-width: thin;
+  scrollbar-color: #4a4f59 transparent;
+}
+
+@layer components {
+  .veta-fondo {
+    background-image:
+      radial-gradient(60rem 30rem at 15% -10%, rgba(233, 180, 76, 0.1), transparent 60%),
+      radial-gradient(45rem 25rem at 95% 10%, rgba(233, 180, 76, 0.06), transparent 60%);
+  }
+}
+
+/* ─────────────────────────────  impresión  ─────────────────────────────
+   El informe se entrega a un cliente. Al imprimir desaparece todo lo que es
+   herramienta —cabecera, formulario, botones— y queda el documento. */
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 14mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #17150f !important;
+  }
+
+  .no-imprimir {
+    display: none !important;
+  }
+
+  .solo-imprimir {
+    display: block !important;
+  }
+
+  .hoja {
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    max-width: none !important;
+  }
+
+  /* Que un bloque no se parta a la mitad entre dos páginas. */
+  .bloque {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .salto-antes {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  a[href]::after {
+    content: '';
+  }
+}
